@@ -1,77 +1,583 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-// ─── Sample Data ───────────────────────────────────────────────────────────
-const INITIAL_PATIENTS = [
+// ─── Business Configurations ────────────────────────────────────────────────
+const BUSINESSES = [
   {
-    id: 1,
-    name: "Rahul Sharma",
-    age: 34,
-    type: "Follow-up",
-    scheduled: "10:00 AM",
-    allocatedMins: 15,
-    phone: "98100-11111",
+    id: "clinic",
+    icon: "🏥",
+    name: "Clinic / Hospital",
+    color: "#0EA5E9",
+    bg: "#E0F2FE",
+    desc: "Doctor appointments & OPD",
+    queueLabel: "Patient Queue",
+    sessionLabel: "Consultation",
+    staffLabel: "Doctor/Staff",
+    customers: [
+      {
+        id: 1,
+        name: "Rahul Sharma",
+        age: 34,
+        type: "Follow-up",
+        scheduled: "10:00 AM",
+        allocatedMins: 15,
+        phone: "98100-11111",
+      },
+      {
+        id: 2,
+        name: "Priya Mehta",
+        age: 28,
+        type: "New Consult",
+        scheduled: "10:15 AM",
+        allocatedMins: 20,
+        phone: "98100-22222",
+      },
+      {
+        id: 3,
+        name: "Anil Verma",
+        age: 52,
+        type: "Follow-up",
+        scheduled: "10:35 AM",
+        allocatedMins: 15,
+        phone: "98100-33333",
+      },
+      {
+        id: 4,
+        name: "Sunita Patel",
+        age: 45,
+        type: "Emergency",
+        scheduled: "10:50 AM",
+        allocatedMins: 10,
+        phone: "98100-44444",
+      },
+      {
+        id: 5,
+        name: "Deepak Joshi",
+        age: 61,
+        type: "New Consult",
+        scheduled: "11:00 AM",
+        allocatedMins: 20,
+        phone: "98100-55555",
+      },
+    ],
+    types: ["Follow-up", "New Consult", "Emergency", "Check-up"],
+    defaultMins: 15,
   },
   {
-    id: 2,
-    name: "Priya Mehta",
-    age: 28,
-    type: "New Consultation",
-    scheduled: "10:15 AM",
-    allocatedMins: 20,
-    phone: "98100-22222",
+    id: "salon",
+    icon: "✂️",
+    name: "Salon / Barbershop",
+    color: "#A855F7",
+    bg: "#F3E8FF",
+    desc: "Haircut, color, styling & more",
+    queueLabel: "Client Queue",
+    sessionLabel: "Service",
+    staffLabel: "Stylist",
+    customers: [
+      {
+        id: 1,
+        name: "Vikram Malhotra",
+        age: 28,
+        type: "Haircut",
+        scheduled: "11:00 AM",
+        allocatedMins: 30,
+        phone: "99001-11111",
+      },
+      {
+        id: 2,
+        name: "Sneha Kapoor",
+        age: 24,
+        type: "Hair Color",
+        scheduled: "11:30 AM",
+        allocatedMins: 60,
+        phone: "99001-22222",
+      },
+      {
+        id: 3,
+        name: "Rohan Singh",
+        age: 35,
+        type: "Beard Trim",
+        scheduled: "12:30 PM",
+        allocatedMins: 20,
+        phone: "99001-33333",
+      },
+      {
+        id: 4,
+        name: "Ananya Bose",
+        age: 30,
+        type: "Styling",
+        scheduled: "12:50 PM",
+        allocatedMins: 45,
+        phone: "99001-44444",
+      },
+      {
+        id: 5,
+        name: "Karan Mehta",
+        age: 22,
+        type: "Haircut",
+        scheduled: "01:35 PM",
+        allocatedMins: 30,
+        phone: "99001-55555",
+      },
+    ],
+    types: [
+      "Haircut",
+      "Beard Trim",
+      "Hair Color",
+      "Styling",
+      "Spa Treatment",
+      "Facial",
+    ],
+    defaultMins: 30,
   },
   {
-    id: 3,
-    name: "Anil Verma",
-    age: 52,
-    type: "Follow-up",
-    scheduled: "10:35 AM",
-    allocatedMins: 15,
-    phone: "98100-33333",
+    id: "pharmacy",
+    icon: "💊",
+    name: "Medical Store",
+    color: "#10B981",
+    bg: "#D1FAE5",
+    desc: "Prescription & OTC medicines",
+    queueLabel: "Customer Queue",
+    sessionLabel: "Dispensing",
+    staffLabel: "Pharmacist",
+    customers: [
+      {
+        id: 1,
+        name: "Mohan Das",
+        age: 65,
+        type: "Prescription",
+        scheduled: "09:00 AM",
+        allocatedMins: 10,
+        phone: "97001-11111",
+      },
+      {
+        id: 2,
+        name: "Radha Gupta",
+        age: 42,
+        type: "OTC",
+        scheduled: "09:10 AM",
+        allocatedMins: 5,
+        phone: "97001-22222",
+      },
+      {
+        id: 3,
+        name: "Suresh Yadav",
+        age: 55,
+        type: "Prescription",
+        scheduled: "09:15 AM",
+        allocatedMins: 10,
+        phone: "97001-33333",
+      },
+      {
+        id: 4,
+        name: "Pooja Sharma",
+        age: 31,
+        type: "Consultation",
+        scheduled: "09:25 AM",
+        allocatedMins: 15,
+        phone: "97001-44444",
+      },
+      {
+        id: 5,
+        name: "Neeraj Tiwari",
+        age: 48,
+        type: "OTC",
+        scheduled: "09:40 AM",
+        allocatedMins: 5,
+        phone: "97001-55555",
+      },
+    ],
+    types: ["Prescription", "OTC", "Consultation", "Refill", "Insurance"],
+    defaultMins: 8,
   },
   {
-    id: 4,
-    name: "Sunita Patel",
-    age: 45,
-    type: "Emergency",
-    scheduled: "10:50 AM",
-    allocatedMins: 10,
-    phone: "98100-44444",
+    id: "hotel",
+    icon: "🏨",
+    name: "Hotel / Resort",
+    color: "#F59E0B",
+    bg: "#FEF3C7",
+    desc: "Check-in, concierge & services",
+    queueLabel: "Guest Queue",
+    sessionLabel: "Check-in",
+    staffLabel: "Receptionist",
+    customers: [
+      {
+        id: 1,
+        name: "Arjun Nair",
+        age: 38,
+        type: "Check-in",
+        scheduled: "02:00 PM",
+        allocatedMins: 10,
+        phone: "96001-11111",
+      },
+      {
+        id: 2,
+        name: "Meera Iyer",
+        age: 45,
+        type: "Check-out",
+        scheduled: "02:10 PM",
+        allocatedMins: 8,
+        phone: "96001-22222",
+      },
+      {
+        id: 3,
+        name: "Kartik Rao",
+        age: 52,
+        type: "Concierge",
+        scheduled: "02:18 PM",
+        allocatedMins: 15,
+        phone: "96001-33333",
+      },
+      {
+        id: 4,
+        name: "Divya Shetty",
+        age: 29,
+        type: "Room Service",
+        scheduled: "02:33 PM",
+        allocatedMins: 5,
+        phone: "96001-44444",
+      },
+      {
+        id: 5,
+        name: "Prakash Menon",
+        age: 60,
+        type: "Check-in",
+        scheduled: "02:38 PM",
+        allocatedMins: 10,
+        phone: "96001-55555",
+      },
+    ],
+    types: [
+      "Check-in",
+      "Check-out",
+      "Concierge",
+      "Room Service",
+      "Complaint",
+      "Amenity",
+    ],
+    defaultMins: 10,
   },
   {
-    id: 5,
-    name: "Deepak Joshi",
-    age: 61,
-    type: "New Consultation",
-    scheduled: "11:00 AM",
-    allocatedMins: 20,
-    phone: "98100-55555",
+    id: "cafe",
+    icon: "☕",
+    name: "Cafe / Restaurant",
+    color: "#EF4444",
+    bg: "#FEE2E2",
+    desc: "Orders, table service & takeaway",
+    queueLabel: "Order Queue",
+    sessionLabel: "Service",
+    staffLabel: "Staff",
+    customers: [
+      {
+        id: 1,
+        name: "Table 3 - Amit",
+        age: 30,
+        type: "Dine-in",
+        scheduled: "01:00 PM",
+        allocatedMins: 45,
+        phone: "—",
+      },
+      {
+        id: 2,
+        name: "Riya Sharma",
+        age: 25,
+        type: "Takeaway",
+        scheduled: "01:05 PM",
+        allocatedMins: 10,
+        phone: "95001-22222",
+      },
+      {
+        id: 3,
+        name: "Table 7 - Roy",
+        age: 40,
+        type: "Dine-in",
+        scheduled: "01:15 PM",
+        allocatedMins: 40,
+        phone: "—",
+      },
+      {
+        id: 4,
+        name: "Neha Pant",
+        age: 28,
+        type: "Takeaway",
+        scheduled: "01:25 PM",
+        allocatedMins: 8,
+        phone: "95001-44444",
+      },
+      {
+        id: 5,
+        name: "Table 2 - Kumar",
+        age: 35,
+        type: "Dine-in",
+        scheduled: "01:33 PM",
+        allocatedMins: 50,
+        phone: "—",
+      },
+    ],
+    types: ["Dine-in", "Takeaway", "Delivery", "Reservation", "Special Order"],
+    defaultMins: 20,
   },
   {
-    id: 6,
-    name: "Kavya Reddy",
-    age: 22,
-    type: "Follow-up",
-    scheduled: "11:20 AM",
-    allocatedMins: 15,
-    phone: "98100-66666",
+    id: "bank",
+    icon: "🏦",
+    name: "Bank / Post Office",
+    color: "#3B82F6",
+    bg: "#DBEAFE",
+    desc: "Accounts, loans & transactions",
+    queueLabel: "Customer Queue",
+    sessionLabel: "Transaction",
+    staffLabel: "Teller",
+    customers: [
+      {
+        id: 1,
+        name: "Ashok Jain",
+        age: 55,
+        type: "Withdrawal",
+        scheduled: "10:00 AM",
+        allocatedMins: 8,
+        phone: "94001-11111",
+      },
+      {
+        id: 2,
+        name: "Sunita Rao",
+        age: 40,
+        type: "Account Open",
+        scheduled: "10:08 AM",
+        allocatedMins: 20,
+        phone: "94001-22222",
+      },
+      {
+        id: 3,
+        name: "Vijay Kumar",
+        age: 62,
+        type: "Loan Inquiry",
+        scheduled: "10:28 AM",
+        allocatedMins: 25,
+        phone: "94001-33333",
+      },
+      {
+        id: 4,
+        name: "Kavita Joshi",
+        age: 35,
+        type: "Deposit",
+        scheduled: "10:53 AM",
+        allocatedMins: 5,
+        phone: "94001-44444",
+      },
+      {
+        id: 5,
+        name: "Manoj Pandey",
+        age: 48,
+        type: "DD/Cheque",
+        scheduled: "10:58 AM",
+        allocatedMins: 10,
+        phone: "94001-55555",
+      },
+    ],
+    types: [
+      "Deposit",
+      "Withdrawal",
+      "Account Open",
+      "Loan Inquiry",
+      "DD/Cheque",
+      "KYC Update",
+    ],
+    defaultMins: 12,
   },
-].map((p) => ({ ...p, status: "waiting" }));
+  {
+    id: "govt",
+    icon: "🏛️",
+    name: "Govt. Office / RTO",
+    color: "#64748B",
+    bg: "#F1F5F9",
+    desc: "Licences, permits & certificates",
+    queueLabel: "Applicant Queue",
+    sessionLabel: "Processing",
+    staffLabel: "Officer",
+    customers: [
+      {
+        id: 1,
+        name: "Ramesh Pal",
+        age: 28,
+        type: "Driving Licence",
+        scheduled: "09:30 AM",
+        allocatedMins: 15,
+        phone: "93001-11111",
+      },
+      {
+        id: 2,
+        name: "Shanti Devi",
+        age: 50,
+        type: "Certificate",
+        scheduled: "09:45 AM",
+        allocatedMins: 20,
+        phone: "93001-22222",
+      },
+      {
+        id: 3,
+        name: "Ajay Mishra",
+        age: 35,
+        type: "Passport",
+        scheduled: "10:05 AM",
+        allocatedMins: 25,
+        phone: "93001-33333",
+      },
+      {
+        id: 4,
+        name: "Geeta Singh",
+        age: 44,
+        type: "Property Reg.",
+        scheduled: "10:30 AM",
+        allocatedMins: 30,
+        phone: "93001-44444",
+      },
+      {
+        id: 5,
+        name: "Harish Tomar",
+        age: 39,
+        type: "RC Transfer",
+        scheduled: "11:00 AM",
+        allocatedMins: 15,
+        phone: "93001-55555",
+      },
+    ],
+    types: [
+      "Driving Licence",
+      "RC Transfer",
+      "Passport",
+      "Certificate",
+      "Property Reg.",
+      "Ration Card",
+    ],
+    defaultMins: 20,
+  },
+  {
+    id: "gym",
+    icon: "💪",
+    name: "Gym / Wellness Center",
+    color: "#F97316",
+    bg: "#FFEDD5",
+    desc: "Trainer sessions & equipment slots",
+    queueLabel: "Member Queue",
+    sessionLabel: "Training",
+    staffLabel: "Trainer",
+    customers: [
+      {
+        id: 1,
+        name: "Sameer Khan",
+        age: 25,
+        type: "Personal Training",
+        scheduled: "06:00 AM",
+        allocatedMins: 60,
+        phone: "92001-11111",
+      },
+      {
+        id: 2,
+        name: "Ritika Verma",
+        age: 30,
+        type: "Yoga",
+        scheduled: "07:00 AM",
+        allocatedMins: 45,
+        phone: "92001-22222",
+      },
+      {
+        id: 3,
+        name: "Dev Anand",
+        age: 42,
+        type: "Cardio",
+        scheduled: "07:45 AM",
+        allocatedMins: 30,
+        phone: "92001-33333",
+      },
+      {
+        id: 4,
+        name: "Pooja Rawat",
+        age: 27,
+        type: "Personal Training",
+        scheduled: "08:15 AM",
+        allocatedMins: 60,
+        phone: "92001-44444",
+      },
+      {
+        id: 5,
+        name: "Rohit Tiwari",
+        age: 35,
+        type: "Zumba",
+        scheduled: "09:15 AM",
+        allocatedMins: 45,
+        phone: "92001-55555",
+      },
+    ],
+    types: [
+      "Personal Training",
+      "Yoga",
+      "Zumba",
+      "Cardio",
+      "Strength",
+      "Massage",
+    ],
+    defaultMins: 45,
+  },
+];
 
-const TYPE_COLORS = {
-  "Follow-up": { bg: "#E8F4FD", text: "#1A6FA8", dot: "#3B9ADE" },
-  "New Consultation": { bg: "#EDF7EE", text: "#1A6B3A", dot: "#34A85A" },
-  Emergency: { bg: "#FEF0F0", text: "#C0392B", dot: "#E74C3C" },
+// ─── Type color map ──────────────────────────────────────────────────────────
+const TYPE_COLORS_MAP = {
+  "Follow-up": { bg: "#E0F2FE", text: "#0369A1" },
+  "New Consult": { bg: "#D1FAE5", text: "#065F46" },
+  Emergency: { bg: "#FEE2E2", text: "#991B1B" },
+  "Check-up": { bg: "#FEF3C7", text: "#92400E" },
+  Haircut: { bg: "#F3E8FF", text: "#6B21A8" },
+  "Hair Color": { bg: "#FCE7F3", text: "#9D174D" },
+  "Beard Trim": { bg: "#E0E7FF", text: "#3730A3" },
+  Styling: { bg: "#FDF4FF", text: "#7E22CE" },
+  "Spa Treatment": { bg: "#FEE2E2", text: "#9F1239" },
+  Facial: { bg: "#FCE7F3", text: "#831843" },
+  Prescription: { bg: "#D1FAE5", text: "#065F46" },
+  OTC: { bg: "#F0FDF4", text: "#14532D" },
+  Consultation: { bg: "#DBEAFE", text: "#1E40AF" },
+  Refill: { bg: "#EDE9FE", text: "#4C1D95" },
+  Insurance: { bg: "#FEF9C3", text: "#713F12" },
+  "Check-in": { bg: "#FEF3C7", text: "#78350F" },
+  "Check-out": { bg: "#FEF9C3", text: "#713F12" },
+  Concierge: { bg: "#E0F2FE", text: "#0C4A6E" },
+  "Room Service": { bg: "#D1FAE5", text: "#064E3B" },
+  Complaint: { bg: "#FEE2E2", text: "#7F1D1D" },
+  Amenity: { bg: "#EDE9FE", text: "#4C1D95" },
+  "Dine-in": { bg: "#FEE2E2", text: "#7F1D1D" },
+  Takeaway: { bg: "#FFF7ED", text: "#7C2D12" },
+  Delivery: { bg: "#FDF4FF", text: "#581C87" },
+  Reservation: { bg: "#F0FDF4", text: "#14532D" },
+  "Special Order": { bg: "#FEF3C7", text: "#78350F" },
+  Withdrawal: { bg: "#EFF6FF", text: "#1D4ED8" },
+  Deposit: { bg: "#F0FDF4", text: "#15803D" },
+  "Account Open": { bg: "#DBEAFE", text: "#1E40AF" },
+  "Loan Inquiry": { bg: "#FEF3C7", text: "#92400E" },
+  "DD/Cheque": { bg: "#E0E7FF", text: "#3730A3" },
+  "KYC Update": { bg: "#FEF9C3", text: "#713F12" },
+  "Driving Licence": { bg: "#F1F5F9", text: "#334155" },
+  "RC Transfer": { bg: "#E0E7FF", text: "#3730A3" },
+  Passport: { bg: "#E0F2FE", text: "#0C4A6E" },
+  Certificate: { bg: "#D1FAE5", text: "#064E3B" },
+  "Property Reg.": { bg: "#FEF3C7", text: "#78350F" },
+  "Ration Card": { bg: "#FEF9C3", text: "#713F12" },
+  "Personal Training": { bg: "#FFEDD5", text: "#7C2D12" },
+  Yoga: { bg: "#F3E8FF", text: "#6B21A8" },
+  Zumba: { bg: "#FCE7F3", text: "#9D174D" },
+  Cardio: { bg: "#FEE2E2", text: "#991B1B" },
+  Strength: { bg: "#FFF7ED", text: "#7C2D12" },
+  Massage: { bg: "#F0FDF4", text: "#14532D" },
 };
+function getTypeColor(type) {
+  return TYPE_COLORS_MAP[type] || { bg: "#F1F5F9", text: "#475569" };
+}
 
 const STATUS_META = {
-  waiting: { label: "Waiting", bg: "#F0F6FF", text: "#1A6FA8" },
-  active: { label: "In Session", bg: "#E6FAF0", text: "#0F7B45" },
-  done: { label: "Done", bg: "#F0F6FF", text: "#7A92B0" },
-  cancelled: { label: "Cancelled", bg: "#FEF0F0", text: "#C0392B" },
-  late: { label: "Late", bg: "#FEF9EC", text: "#92400E" },
-  rescheduled: { label: "Rescheduled", bg: "#F5F0FF", text: "#6B21A8" },
-  "no-show": { label: "No Show", bg: "#F9FAFB", text: "#6B7280" },
+  waiting: { label: "Waiting", bg: "#EFF6FF", text: "#1D4ED8" },
+  active: { label: "In Progress", bg: "#D1FAE5", text: "#065F46" },
+  done: { label: "Done", bg: "#F8FAFC", text: "#94A3B8" },
+  cancelled: { label: "Cancelled", bg: "#FEE2E2", text: "#991B1B" },
+  late: { label: "Late", bg: "#FEF3C7", text: "#92400E" },
+  rescheduled: { label: "Rescheduled", bg: "#EDE9FE", text: "#6B21A8" },
+  "no-show": { label: "No Show", bg: "#F8FAFC", text: "#64748B" },
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -107,8 +613,7 @@ function recomputeSchedule(patients, driftSeconds) {
     const base =
       cursor != null
         ? cursor + Math.round(driftSeconds / 60)
-        : parseTimeToMinutes(INITIAL_PATIENTS[i]?.scheduled || p.scheduled) +
-          Math.round(driftSeconds / 60);
+        : parseTimeToMinutes(p.scheduled) + Math.round(driftSeconds / 60);
     const newSched = minutesToTimeStr(base);
     cursor = base + p.allocatedMins;
     return { ...p, scheduled: newSched };
@@ -133,7 +638,7 @@ function useBreakpoint() {
   };
 }
 
-// ─── Global Styles ────────────────────────────────────────────────────────────
+// ─── Global CSS ──────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -149,60 +654,139 @@ const GLOBAL_CSS = `
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// OFFLINE BANNER
+// BUSINESS SELECTOR SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
-function OfflineBanner({ offline, lastSync }) {
-  if (!offline) return null;
+function SelectorScreen({ onSelect }) {
   return (
     <div
       style={{
-        background: "#7C2D12",
-        color: "#FED7AA",
-        fontSize: 12,
-        fontWeight: 500,
-        textAlign: "center",
-        padding: "8px 16px",
+        minHeight: "100vh",
+        background: "linear-gradient(135deg,#0F172A 0%,#1E293B 100%)",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 8,
-        flexWrap: "wrap",
+        padding: "24px",
+        fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      <span>⚠️</span>
-      <span>
-        Aap offline hain — data locally save hai.
-        {lastSync ? ` Last sync: ${lastSync}` : ""}
-      </span>
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🔢</div>
+        <h1
+          style={{
+            fontSize: 30,
+            fontWeight: 700,
+            color: "#fff",
+            margin: "0 0 10px",
+          }}
+        >
+          QueueMaster
+        </h1>
+        <p style={{ fontSize: 15, color: "#94A3B8", margin: 0 }}>
+          Apna business chunein — queue instantly manage karein
+        </p>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: 12,
+          width: "100%",
+          maxWidth: 820,
+        }}
+      >
+        {BUSINESSES.map((b) => (
+          <button
+            key={b.id}
+            onClick={() => onSelect(b.id)}
+            style={{
+              background: "#1E293B",
+              border: "1.5px solid #334155",
+              borderRadius: 16,
+              padding: "20px 18px",
+              textAlign: "left",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              cursor: "pointer",
+              color: "white",
+              transition: "border-color .2s, background .2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = b.color;
+              e.currentTarget.style.background = "#243044";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#334155";
+              e.currentTarget.style.background = "#1E293B";
+            }}
+          >
+            <div style={{ fontSize: 30 }}>{b.icon}</div>
+            <div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#F1F5F9",
+                  marginBottom: 4,
+                }}
+              >
+                {b.name}
+              </div>
+              <div style={{ fontSize: 12, color: "#64748B" }}>{b.desc}</div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 4,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: b.color,
+                }}
+              />
+              <span style={{ fontSize: 11, color: "#94A3B8" }}>
+                {b.customers.length} sample entries
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
+      <style>{GLOBAL_CSS}</style>
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ACTION MODAL  (Cancel / Late / Reschedule / No-Show)
+// ACTION MODAL
 // ═══════════════════════════════════════════════════════════════════════════
-function ActionModal({ patient, onClose, onAction, patients }) {
+function ActionModal({ patient, biz, onClose, onAction, patients }) {
   const [screen, setScreen] = useState("main");
   const [reschedSlot, setReschedSlot] = useState("");
   const [lateBy, setLateBy] = useState(10);
   const [reason, setReason] = useState("");
   const { isMobile } = useBreakpoint();
-
   if (!patient) return null;
 
-  const lastActive = [...patients]
+  const lastWaiting = [...patients]
     .reverse()
     .find((p) => p.status === "waiting");
-  const suggestedSlot = lastActive
+  const suggestedSlot = lastWaiting
     ? minutesToTimeStr(
-        parseTimeToMinutes(lastActive.scheduled) + lastActive.allocatedMins,
+        parseTimeToMinutes(lastWaiting.scheduled) + lastWaiting.allocatedMins,
       )
     : "12:00 PM";
 
   const overlay = {
     position: "fixed",
     inset: 0,
-    background: "rgba(15,39,68,0.5)",
+    background: "rgba(15,39,68,0.55)",
     zIndex: 1000,
     display: "flex",
     alignItems: isMobile ? "flex-end" : "center",
@@ -212,10 +796,10 @@ function ActionModal({ patient, onClose, onAction, patients }) {
   const box = {
     background: "#fff",
     borderRadius: isMobile ? "20px 20px 0 0" : 18,
-    padding: isMobile ? "8px 16px 36px" : 24,
+    padding: isMobile ? "8px 16px 40px" : 28,
     width: "100%",
-    maxWidth: isMobile ? "100%" : 440,
-    maxHeight: "90vh",
+    maxWidth: isMobile ? "100%" : 460,
+    maxHeight: "92vh",
     overflowY: "auto",
     boxShadow: "0 8px 40px rgba(15,39,68,0.22)",
     fontFamily: "'DM Sans', sans-serif",
@@ -280,7 +864,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
   return (
     <div style={overlay} onClick={onClose}>
       <div style={box} onClick={(e) => e.stopPropagation()}>
-        {/* Drag handle */}
         {isMobile && (
           <div
             style={{
@@ -292,8 +875,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
             }}
           />
         )}
-
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -307,13 +888,13 @@ function ActionModal({ patient, onClose, onAction, patients }) {
               width: 44,
               height: 44,
               borderRadius: 12,
-              background: "#E8F4FD",
+              background: biz.bg,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: 18,
               fontWeight: 700,
-              color: "#1A6FA8",
+              color: biz.color,
               flexShrink: 0,
             }}
           >
@@ -333,7 +914,7 @@ function ActionModal({ patient, onClose, onAction, patients }) {
               {patient.name}
             </div>
             <div style={{ fontSize: 12, color: "#7A92B0" }}>
-              {patient.type} · Scheduled {patient.scheduled}
+              {patient.type} · {patient.scheduled}
             </div>
           </div>
           <button
@@ -344,7 +925,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
               fontSize: 20,
               color: "#7A92B0",
               cursor: "pointer",
-              flexShrink: 0,
               minWidth: 36,
               minHeight: 36,
               display: "flex",
@@ -356,34 +936,33 @@ function ActionModal({ patient, onClose, onAction, patients }) {
           </button>
         </div>
 
-        {/* ── Main Screen ── */}
         {screen === "main" && (
           <>
             <div style={{ fontSize: 13, color: "#7A92B0", marginBottom: 14 }}>
-              Patient ki situation kya hai? Sahi option chunein:
+              Kya situation hai? Sahi option chunein:
             </div>
             {[
               {
                 icon: "🚫",
-                label: "Cancel Appointment",
-                sub: "Patient nahi aayega — slot free karo",
-                clr: "#FEF0F0",
-                tc: "#C0392B",
+                label: "Cancel",
+                sub: "Slot free karo — woh nahi aayega",
+                clr: "#FEE2E2",
+                tc: "#991B1B",
                 go: "cancel",
               },
               {
                 icon: "🕐",
-                label: "Patient Late Aaya",
-                sub: "Der se aaya — queue ke last mein bhejo",
-                clr: "#FEF9EC",
+                label: "Late Aaya",
+                sub: "Queue ke last mein bhejo",
+                clr: "#FEF3C7",
                 tc: "#92400E",
                 go: "late",
               },
               {
                 icon: "📅",
-                label: "Reschedule Karo",
-                sub: "Kisi aur time ya din pe slot do",
-                clr: "#F5F0FF",
+                label: "Reschedule",
+                sub: "Kisi aur time pe slot do",
+                clr: "#EDE9FE",
                 tc: "#6B21A8",
                 go: "reschedule",
               },
@@ -420,26 +999,23 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                     {opt.sub}
                   </div>
                 </div>
-                <span style={{ color: opt.tc, fontSize: 20, flexShrink: 0 }}>
-                  ›
-                </span>
+                <span style={{ color: opt.tc, fontSize: 20 }}>›</span>
               </div>
             ))}
           </>
         )}
 
-        {/* ── Cancel Screen ── */}
         {screen === "cancel" && (
           <>
             <div
               style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: "#C0392B",
+                color: "#991B1B",
                 marginBottom: 12,
               }}
             >
-              🚫 Appointment Cancel
+              🚫 Cancel Confirm
             </div>
             <NoteArea placeholder="Reason likhein (optional)..." />
             <div
@@ -452,13 +1028,12 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 marginBottom: 14,
               }}
             >
-              ⚠ Yeh slot khatam ho jaayega. Baaki patients ke times
-              automatically update ho jaayenge.
+              ⚠ Yeh slot khatam ho jaayega. Baaki schedule update ho jaayega.
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <PrimaryBtn
                 label="Confirm Cancel"
-                bg="#C0392B"
+                bg="#991B1B"
                 color="#fff"
                 onClick={() => {
                   onAction("cancel", patient.id, { reason });
@@ -470,7 +1045,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
           </>
         )}
 
-        {/* ── Late Screen ── */}
         {screen === "late" && (
           <>
             <div
@@ -481,7 +1055,7 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 marginBottom: 12,
               }}
             >
-              🕐 Patient Late — Kitni Der?
+              🕐 Kitni Der Late?
             </div>
             <div
               style={{
@@ -499,9 +1073,9 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                     padding: "9px 18px",
                     borderRadius: 20,
                     minHeight: 42,
-                    border: `1.5px solid ${lateBy === m ? "#1A6FA8" : "#D0DFF0"}`,
-                    background: lateBy === m ? "#E8F4FD" : "#fff",
-                    color: lateBy === m ? "#1A6FA8" : "#7A92B0",
+                    border: `1.5px solid ${lateBy === m ? biz.color : "#D0DFF0"}`,
+                    background: lateBy === m ? biz.bg : "#fff",
+                    color: lateBy === m ? biz.color : "#7A92B0",
                     fontSize: 13,
                     fontWeight: lateBy === m ? 600 : 400,
                     cursor: "pointer",
@@ -511,24 +1085,11 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 </button>
               ))}
             </div>
-            <div
-              style={{
-                background: "#F0F6FF",
-                borderRadius: 10,
-                padding: "10px 12px",
-                fontSize: 12,
-                color: "#1A6FA8",
-                marginBottom: 14,
-              }}
-            >
-              Patient queue ke last mein move ho jaayega. Baaki patients ka
-              schedule theek rahega.
-            </div>
             <NoteArea placeholder="Note (optional)..." />
             <div style={{ display: "flex", gap: 8 }}>
               <PrimaryBtn
-                label="Queue ke Last mein Bhejo"
-                bg="#1A6FA8"
+                label="Queue End pe Bhejo"
+                bg={biz.color}
                 color="#fff"
                 onClick={() => {
                   onAction("late", patient.id, { lateBy, reason });
@@ -540,7 +1101,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
           </>
         )}
 
-        {/* ── Reschedule Screen ── */}
         {screen === "reschedule" && (
           <>
             <div
@@ -551,7 +1111,7 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 marginBottom: 12,
               }}
             >
-              📅 Reschedule Appointment
+              📅 Reschedule
             </div>
             <div
               style={{
@@ -563,8 +1123,7 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 marginBottom: 12,
               }}
             >
-              💡 Suggested next slot: <strong>{suggestedSlot}</strong> (queue ke
-              baad)
+              💡 Suggested slot: <strong>{suggestedSlot}</strong>
             </div>
             <div
               style={{
@@ -582,7 +1141,7 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                     style={{
                       padding: "8px 13px",
                       borderRadius: 20,
-                      minHeight: 38,
+                      minHeight: 36,
                       border: `1.5px solid ${reschedSlot === slot ? "#6B21A8" : "#D0DFF0"}`,
                       background: reschedSlot === slot ? "#F5F0FF" : "#fff",
                       color: reschedSlot === slot ? "#6B21A8" : "#7A92B0",
@@ -615,7 +1174,6 @@ function ActionModal({ patient, onClose, onAction, patients }) {
           </>
         )}
 
-        {/* ── No Show Screen ── */}
         {screen === "noshow" && (
           <>
             <div
@@ -638,8 +1196,8 @@ function ActionModal({ patient, onClose, onAction, patients }) {
                 marginBottom: 12,
               }}
             >
-              Patient aaya hi nahi aur koi response nahi. Slot skip hoga, agli
-              appointments time pe chalti rahein.
+              Patient aaya hi nahi aur koi response nahi. Slot skip hoga, agle
+              time pe chalti rahein.
             </div>
             <NoteArea placeholder="Note (optional)..." />
             <div style={{ display: "flex", gap: 8 }}>
@@ -662,15 +1220,15 @@ function ActionModal({ patient, onClose, onAction, patients }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PATIENT WAITING ROOM VIEW
+// CUSTOMER / PATIENT WAITING ROOM VIEW
 // ═══════════════════════════════════════════════════════════════════════════
-function PatientView({
+function CustomerView({
+  biz,
   patients,
   currentIdx,
   sessionSeconds,
   allocatedSeconds,
   driftSeconds,
-  offline,
 }) {
   const current = patients[currentIdx];
   const progress =
@@ -695,9 +1253,6 @@ function PatientView({
         paddingBottom: 80,
       }}
     >
-      <OfflineBanner offline={offline} />
-
-      {/* Header */}
       <div
         style={{
           background: "#fff",
@@ -712,61 +1267,27 @@ function PatientView({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: "#1A6FA8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
-                fill="#fff"
-              />
-            </svg>
-          </div>
+          <div style={{ fontSize: 26 }}>{biz.icon}</div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 600, color: "#0F2744" }}>
-              MediQueue
+              {biz.name}
             </div>
             <div style={{ fontSize: 11, color: "#7A92B0" }}>
-              Patient Waiting Room
+              Live Waiting Room
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {offline && (
-            <div
-              style={{
-                fontSize: 11,
-                background: "#FEF0F0",
-                color: "#C0392B",
-                padding: "3px 10px",
-                borderRadius: 20,
-                fontWeight: 600,
-              }}
-            >
-              ● Offline
-            </div>
-          )}
-          <div
-            style={{
-              fontSize: 12,
-              color: "#7A92B0",
-              background: "#F0F6FF",
-              padding: "4px 12px",
-              borderRadius: 20,
-              border: "1px solid #D0DFF0",
-            }}
-          >
-            Live
-          </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "#7A92B0",
+            background: "#F0F6FF",
+            padding: "4px 12px",
+            borderRadius: 20,
+            border: "1px solid #D0DFF0",
+          }}
+        >
+          Live
         </div>
       </div>
 
@@ -777,7 +1298,7 @@ function PatientView({
           padding: narrow ? "14px 12px" : "24px 16px",
         }}
       >
-        {/* Currently In Session Card */}
+        {/* In-session card */}
         <div
           style={{
             background: "#fff",
@@ -816,101 +1337,115 @@ function PatientView({
                 textTransform: "uppercase",
               }}
             >
-              Currently In Session
+              Currently In {biz.sessionLabel}
             </span>
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: narrow ? "flex-start" : "center",
-              gap: narrow ? 12 : 14,
-              marginBottom: 16,
-              flexWrap: narrow ? "wrap" : "nowrap",
-            }}
-          >
-            <div
-              style={{
-                width: narrow ? 48 : 52,
-                height: narrow ? 48 : 52,
-                borderRadius: 14,
-                background: "#E8F4FD",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: narrow ? 18 : 20,
-                fontWeight: 700,
-                color: "#1A6FA8",
-                flexShrink: 0,
-              }}
-            >
-              {current ? current.name.charAt(0) : "?"}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+          {current && currentIdx < patients.length ? (
+            <>
               <div
                 style={{
-                  fontSize: narrow ? 15 : 17,
-                  fontWeight: 600,
-                  color: "#0F2744",
-                  marginBottom: 3,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  marginBottom: 16,
+                  flexWrap: "wrap",
                 }}
               >
-                {current ? current.name : "Waiting..."}
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 14,
+                    background: biz.bg,
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: biz.color,
+                  }}
+                >
+                  {current.name.charAt(0)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 17,
+                      fontWeight: 600,
+                      color: "#0F2744",
+                      marginBottom: 3,
+                    }}
+                  >
+                    {current.name}
+                  </div>
+                  <div style={{ fontSize: 13, color: "#7A92B0" }}>
+                    {current.type}
+                    {current.age ? ` · Age ${current.age}` : ""}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 700,
+                      color: isOvertime ? "#E74C3C" : biz.color,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {formatTime(sessionSeconds)}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#7A92B0" }}>
+                    /{formatTime(allocatedSeconds)}
+                  </div>
+                </div>
               </div>
-              <div style={{ fontSize: 13, color: "#7A92B0" }}>
-                {current ? `${current.type} · Age ${current.age}` : ""}
-              </div>
-            </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
               <div
                 style={{
-                  fontSize: narrow ? 24 : 26,
-                  fontWeight: 700,
-                  color: isOvertime ? "#E74C3C" : "#1A6FA8",
-                  fontVariantNumeric: "tabular-nums",
+                  height: 6,
+                  background: "#F0F6FF",
+                  borderRadius: 99,
+                  overflow: "hidden",
                 }}
               >
-                {formatTime(sessionSeconds)}
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${progress}%`,
+                    background: isOvertime
+                      ? "#E74C3C"
+                      : progress > 80
+                        ? "#F59E0B"
+                        : biz.color,
+                    borderRadius: 99,
+                    transition: "width 0.5s",
+                  }}
+                />
               </div>
-              <div style={{ fontSize: 11, color: "#7A92B0" }}>
-                /{formatTime(allocatedSeconds)} alloc.
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              height: 6,
-              background: "#F0F6FF",
-              borderRadius: 99,
-              overflow: "hidden",
-            }}
-          >
+              {isOvertime && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: "#E74C3C",
+                    fontWeight: 500,
+                  }}
+                >
+                  ⚠ Session {formatTime(sessionSeconds - allocatedSeconds)} over
+                  time chal raha hai
+                </div>
+              )}
+            </>
+          ) : (
             <div
               style={{
-                height: "100%",
-                width: `${progress}%`,
-                background: isOvertime
-                  ? "#E74C3C"
-                  : progress > 80
-                    ? "#F59E0B"
-                    : "#1A6FA8",
-                borderRadius: 99,
-                transition: "width 0.5s",
-              }}
-            />
-          </div>
-          {isOvertime && (
-            <div
-              style={{
-                marginTop: 8,
-                fontSize: 12,
-                color: "#E74C3C",
-                fontWeight: 500,
+                textAlign: "center",
+                padding: "24px 0",
+                color: "#7A92B0",
+                fontSize: 14,
               }}
             >
-              ⚠ Session running {formatTime(sessionSeconds - allocatedSeconds)}{" "}
-              over time
+              Abhi koi active session nahi
             </div>
           )}
         </div>
@@ -940,13 +1475,12 @@ function PatientView({
               }}
             >
               {driftSeconds > 0
-                ? `Schedule ~${Math.round(driftSeconds / 60)} min late hai. Aapka time automatically update ho gaya.`
-                : `Doctor ~${Math.round(Math.abs(driftSeconds) / 60)} min pehle chal rahe hain! Aap jaldi bulaye ja sakte hain.`}
+                ? `Schedule ~${Math.round(driftSeconds / 60)} min late chal raha hai. Aapka time update ho gaya.`
+                : `${biz.staffLabel} ~${Math.round(Math.abs(driftSeconds) / 60)} min pehle chal rahe hain!`}
             </span>
           </div>
         )}
 
-        {/* Queue list */}
         <div
           style={{
             fontSize: 12,
@@ -957,11 +1491,11 @@ function PatientView({
             textTransform: "uppercase",
           }}
         >
-          Waiting Queue
+          {biz.queueLabel}
         </div>
 
         {activeQueue.map((p, i) => {
-          const tc = TYPE_COLORS[p.type] || TYPE_COLORS["Follow-up"];
+          const tc = getTypeColor(p.type);
           const isNext = i === 0;
           return (
             <div
@@ -969,7 +1503,7 @@ function PatientView({
               style={{
                 background: "#fff",
                 borderRadius: 12,
-                border: `1.5px solid ${isNext ? "#1A6FA8" : "#E2EAF4"}`,
+                border: `1.5px solid ${isNext ? biz.color : "#E2EAF4"}`,
                 padding: narrow ? "12px 13px" : "14px 16px",
                 marginBottom: 10,
                 display: "flex",
@@ -983,7 +1517,7 @@ function PatientView({
                   height: 36,
                   borderRadius: 10,
                   flexShrink: 0,
-                  background: isNext ? "#1A6FA8" : "#F0F6FF",
+                  background: isNext ? biz.color : "#F0F6FF",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1052,13 +1586,13 @@ function PatientView({
                   style={{
                     fontSize: narrow ? 13 : 14,
                     fontWeight: 700,
-                    color: isNext ? "#1A6FA8" : "#0F2744",
+                    color: isNext ? biz.color : "#0F2744",
                   }}
                 >
                   {p.scheduled}
                 </div>
                 {isNext && (
-                  <div style={{ fontSize: 11, color: "#1A6FA8", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: biz.color, marginTop: 2 }}>
                     Aap next hain!
                   </div>
                 )}
@@ -1066,7 +1600,6 @@ function PatientView({
             </div>
           );
         })}
-
         {activeQueue.length === 0 && (
           <div
             style={{
@@ -1076,20 +1609,20 @@ function PatientView({
               fontSize: 14,
             }}
           >
-            No more patients in queue
+            Queue mein koi nahi
           </div>
         )}
       </div>
-
       <style>{GLOBAL_CSS}</style>
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ASSISTANT DASHBOARD
+// STAFF / ASSISTANT DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════════
-function AssistantView({
+function StaffView({
+  biz,
   patients,
   setPatients,
   currentIdx,
@@ -1100,8 +1633,6 @@ function AssistantView({
   setIsRunning,
   driftSeconds,
   setDriftSeconds,
-  offline,
-  lastSync,
 }) {
   const current = patients[currentIdx];
   const allocatedSecs = current ? current.allocatedMins * 60 : 0;
@@ -1115,12 +1646,11 @@ function AssistantView({
   const [note, setNote] = useState("");
   const [modalPatient, setModalPatient] = useState(null);
   const [showLog, setShowLog] = useState(false);
-
-  const [addingPatient, setAddingPatient] = useState(false);
+  const [addingCustomer, setAddingCustomer] = useState(false);
   const [newName, setNewName] = useState("");
   const [newAge, setNewAge] = useState("");
-  const [newType, setNewType] = useState("Follow-up");
-  const [newMins, setNewMins] = useState(15);
+  const [newType, setNewType] = useState(biz.types[0]);
+  const [newMins, setNewMins] = useState(biz.defaultMins);
 
   const addLog = useCallback((msg) => {
     const timeStr = new Date().toLocaleTimeString([], {
@@ -1133,14 +1663,13 @@ function AssistantView({
     );
   }, []);
 
-  // ── Session controls ─────────────────────────────────────────────────────
   const startSession = () => {
     setIsRunning(true);
     setSessionSeconds(0);
     setPatients((prev) =>
       prev.map((p, i) => (i === currentIdx ? { ...p, status: "active" } : p)),
     );
-    addLog(`▶ Session started: ${current.name}`);
+    addLog(`▶ ${biz.sessionLabel} started: ${current.name}`);
   };
 
   const endSession = () => {
@@ -1149,7 +1678,7 @@ function AssistantView({
     const newDrift = driftSeconds + extra;
     setDriftSeconds(newDrift);
     addLog(
-      `⏹ Session ended: ${current.name} (${formatTime(sessionSeconds)} | drift ${extra >= 0 ? "+" : ""}${Math.round(extra / 60)}m)`,
+      `⏹ Done: ${current.name} (${formatTime(sessionSeconds)} | drift ${extra >= 0 ? "+" : ""}${Math.round(extra / 60)}m)`,
     );
     setPatients((prev) => {
       const updated = prev.map((p, i) =>
@@ -1160,10 +1689,11 @@ function AssistantView({
     if (currentIdx < patients.length - 1) {
       setCurrentIdx((c) => c + 1);
       setSessionSeconds(0);
-    } else setCurrentIdx((c) => c + 1);
+    } else {
+      setCurrentIdx((c) => c + 1);
+    }
   };
 
-  // ── Action modal handler ─────────────────────────────────────────────────
   const handleAction = (action, pid, extra) => {
     setPatients((prev) => {
       let updated = [...prev];
@@ -1180,7 +1710,7 @@ function AssistantView({
         const p = { ...updated[idx], status: "late", lateBy: extra.lateBy };
         updated.splice(idx, 1);
         updated.push(p);
-        addLog(`🕐 Late: ${p.name} → moved to end of queue`);
+        addLog(`🕐 Late: ${p.name} → moved to end`);
       } else if (action === "reschedule") {
         updated[idx] = {
           ...updated[idx],
@@ -1193,7 +1723,6 @@ function AssistantView({
     });
   };
 
-  // ── Adjust allocated time ────────────────────────────────────────────────
   const applyAdjust = (pid) => {
     const updated = patients.map((p) =>
       p.id === pid
@@ -1208,18 +1737,17 @@ function AssistantView({
     setAdjustMins(0);
   };
 
-  // ── Add patient ──────────────────────────────────────────────────────────
-  const addPatient = () => {
+  const addCustomer = () => {
     if (!newName.trim()) return;
-    const activePatients = patients.filter(
+    const activeP = patients.filter(
       (p) => !["cancelled", "no-show", "rescheduled"].includes(p.status),
     );
-    const lastP = activePatients[activePatients.length - 1];
+    const lastP = activeP[activeP.length - 1];
     const lastMins = parseTimeToMinutes(lastP.scheduled) + lastP.allocatedMins;
     const newP = {
       id: Date.now(),
       name: newName.trim(),
-      age: parseInt(newAge) || 30,
+      age: parseInt(newAge) || "",
       type: newType,
       phone: "—",
       status: "waiting",
@@ -1227,23 +1755,19 @@ function AssistantView({
       scheduled: minutesToTimeStr(lastMins + Math.round(driftSeconds / 60)),
     };
     setPatients((prev) => [...prev, newP]);
-    addLog(`➕ New patient added: ${newName.trim()} at ${newP.scheduled}`);
-    setAddingPatient(false);
+    addLog(`➕ Added: ${newName.trim()} at ${newP.scheduled}`);
+    setAddingCustomer(false);
     setNewName("");
     setNewAge("");
-    setNewType("Follow-up");
-    setNewMins(15);
+    setNewType(biz.types[0]);
+    setNewMins(biz.defaultMins);
   };
 
-  const tc = current
-    ? TYPE_COLORS[current.type] || TYPE_COLORS["Follow-up"]
-    : {};
+  const tc = current ? getTypeColor(current.type) : {};
   const progress =
     allocatedSecs > 0
       ? Math.min((sessionSeconds / allocatedSecs) * 100, 100)
       : 0;
-
-  // ── Stats data ───────────────────────────────────────────────────────────
   const statsData = [
     { label: "Total", val: patients.length },
     { label: "Done", val: patients.filter((p) => p.status === "done").length },
@@ -1262,151 +1786,42 @@ function AssistantView({
       label: "Drift",
       val: `${driftSeconds >= 0 ? "+" : ""}${Math.round(driftSeconds / 60)}m`,
     },
-    { label: "Network", val: offline ? "Offline" : "Online" },
   ];
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#F8FAFD",
-        fontFamily: "'DM Sans', sans-serif",
-        paddingBottom: narrow ? 80 : 0,
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <OfflineBanner offline={offline} lastSync={lastSync} />
-
-      {/* Top Nav */}
-      <div
-        style={{
-          background: "#0F2744",
-          padding: narrow ? "0 14px" : "0 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: "#1A6FA8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-                fill="#fff"
-              />
-            </svg>
-          </div>
-          <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>
-            MediQueue
-          </span>
-          {!isMobile && (
-            <span style={{ color: "#4A7FA8", fontSize: 13, marginLeft: 2 }}>
-              · Assistant
-            </span>
-          )}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: isMobile ? 6 : 8,
-            alignItems: "center",
-          }}
-        >
-          {offline && (
-            <div
-              style={{
-                fontSize: 11,
-                background: "#7C2D12",
-                color: "#FED7AA",
-                padding: "4px 10px",
-                borderRadius: 20,
-                fontWeight: 500,
-              }}
-            >
-              ● Offline
-            </div>
-          )}
-          {Math.abs(driftSeconds) > 60 && (
-            <div
-              style={{
-                fontSize: 11,
-                padding: "4px 10px",
-                borderRadius: 20,
-                fontWeight: 500,
-                background: driftSeconds > 0 ? "#7C2D12" : "#14532D",
-                color: driftSeconds > 0 ? "#FED7AA" : "#BBF7D0",
-              }}
-            >
-              {driftSeconds > 0
-                ? `+${Math.round(driftSeconds / 60)}m late`
-                : `${Math.round(driftSeconds / 60)}m early`}
-            </div>
-          )}
-          {!isMobile && (
-            <div style={{ fontSize: 12, color: "#7A9CC0" }}>
-              {
-                patients.filter((p) => ["waiting", "late"].includes(p.status))
-                  .length
-              }{" "}
-              waiting
-            </div>
-          )}
-          {/* Log toggle for narrow screens */}
-          {narrow && (
-            <button
-              onClick={() => setShowLog((v) => !v)}
-              style={{
-                fontSize: 11,
-                padding: "5px 11px",
-                borderRadius: 20,
-                background: showLog ? "#1A6FA8" : "rgba(255,255,255,0.12)",
-                color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              {showLog ? "✕ Log" : "📋 Log"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Body layout */}
       <div
         style={{
           display: isDesktop ? "grid" : "flex",
-          gridTemplateColumns: isDesktop ? "1fr 340px" : undefined,
+          gridTemplateColumns: isDesktop ? "1fr 320px" : undefined,
           flexDirection: isDesktop ? undefined : "column",
-          height: isDesktop ? "calc(100vh - 56px)" : "auto",
+          flex: 1,
+          overflow: "hidden",
         }}
       >
-        {/* ── Main Panel ── */}
-        <div style={{ padding: narrow ? "12px" : "24px", overflowY: "auto" }}>
-          {/* Active Session Card */}
+        {/* Main Panel */}
+        <div
+          style={{
+            overflowY: "auto",
+            padding: narrow ? "12px" : "20px",
+            paddingBottom: narrow ? 80 : 20,
+          }}
+        >
+          {/* Session Card */}
           <div
             style={{
               background: "#fff",
               borderRadius: 16,
               border: "1.5px solid #D0DFF0",
-              padding: narrow ? 14 : 24,
-              marginBottom: 18,
+              padding: narrow ? 14 : 22,
+              marginBottom: 16,
               boxShadow: "0 2px 16px rgba(15,39,68,0.06)",
             }}
           >
@@ -1415,19 +1830,19 @@ function AssistantView({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: 18,
+                marginBottom: 16,
               }}
             >
               <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "#7A92B0",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#94A3B8",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}
               >
-                Active Session
+                {biz.sessionLabel} · Active
               </div>
               {isRunning && (
                 <div
@@ -1461,23 +1876,23 @@ function AssistantView({
                     display: "flex",
                     alignItems: "flex-start",
                     gap: isMobile ? 12 : 16,
-                    marginBottom: 20,
+                    marginBottom: 18,
                     flexWrap: isMobile ? "wrap" : "nowrap",
                   }}
                 >
                   <div
                     style={{
-                      width: isMobile ? 50 : 60,
-                      height: isMobile ? 50 : 60,
-                      borderRadius: 16,
+                      width: isMobile ? 50 : 58,
+                      height: isMobile ? 50 : 58,
+                      borderRadius: 14,
+                      flexShrink: 0,
                       background: tc.bg,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: isMobile ? 20 : 24,
+                      fontSize: isMobile ? 20 : 22,
                       fontWeight: 700,
                       color: tc.text,
-                      flexShrink: 0,
                     }}
                   >
                     {current.name.charAt(0)}
@@ -1506,17 +1921,19 @@ function AssistantView({
                       >
                         {current.type}
                       </span>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          background: "#F0F6FF",
-                          color: "#1A6FA8",
-                          padding: "3px 10px",
-                          borderRadius: 20,
-                        }}
-                      >
-                        Age {current.age}
-                      </span>
+                      {current.age && (
+                        <span
+                          style={{
+                            fontSize: 12,
+                            background: "#F0F6FF",
+                            color: "#1A6FA8",
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          Age {current.age}
+                        </span>
+                      )}
                       <span
                         style={{
                           fontSize: 12,
@@ -1528,6 +1945,19 @@ function AssistantView({
                       >
                         {current.allocatedMins} min
                       </span>
+                      {current.phone && current.phone !== "—" && (
+                        <span
+                          style={{
+                            fontSize: 12,
+                            background: "#F8FAFC",
+                            color: "#475569",
+                            padding: "3px 10px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          📞 {current.phone}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -1550,7 +1980,6 @@ function AssistantView({
                   </div>
                 </div>
 
-                {/* Progress bar */}
                 <div
                   style={{
                     height: 8,
@@ -1568,7 +1997,7 @@ function AssistantView({
                         ? "#E74C3C"
                         : progress > 80
                           ? "#F59E0B"
-                          : "#1A6FA8",
+                          : biz.color,
                       borderRadius: 99,
                       transition: "width 0.5s, background 0.3s",
                     }}
@@ -1601,7 +2030,6 @@ function AssistantView({
                   )}
                 </div>
 
-                {/* Controls */}
                 <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                   {!isRunning ? (
                     <button
@@ -1610,7 +2038,7 @@ function AssistantView({
                         flex: 1,
                         padding: "13px",
                         borderRadius: 10,
-                        background: "#1A6FA8",
+                        background: biz.color,
                         color: "#fff",
                         border: "none",
                         fontSize: 14,
@@ -1619,7 +2047,7 @@ function AssistantView({
                         minHeight: 48,
                       }}
                     >
-                      ▶ Start Session
+                      ▶ Start {biz.sessionLabel}
                     </button>
                   ) : (
                     <button
@@ -1637,12 +2065,11 @@ function AssistantView({
                         minHeight: 48,
                       }}
                     >
-                      ⏹ End Session & Next Patient
+                      ⏹ End & Next
                     </button>
                   )}
                 </div>
 
-                {/* Note input */}
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
@@ -1652,7 +2079,7 @@ function AssistantView({
                       setNote("");
                     }
                   }}
-                  placeholder="Add session note... (press Enter)"
+                  placeholder="Note add karein... (Enter dabayein)"
                   style={{
                     width: "100%",
                     padding: "10px 14px",
@@ -1677,14 +2104,60 @@ function AssistantView({
                 <div
                   style={{ fontSize: 16, fontWeight: 600, color: "#0F2744" }}
                 >
-                  All sessions complete!
+                  Sab kaam ho gaya!
                 </div>
-                <div style={{ fontSize: 13 }}>No more patients in queue.</div>
+                <div style={{ fontSize: 13 }}>Queue mein koi nahi.</div>
               </div>
             )}
           </div>
 
-          {/* Patient Queue */}
+          {/* Stats Row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            {statsData.map((s) => (
+              <div
+                key={s.label}
+                style={{
+                  background: "#fff",
+                  borderRadius: 12,
+                  border: "1px solid #E2EAF4",
+                  padding: "10px 8px",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#94A3B8",
+                    marginBottom: 4,
+                    fontWeight: 600,
+                  }}
+                >
+                  {s.label}
+                </div>
+                <div
+                  style={{
+                    fontSize: 17,
+                    fontWeight: 700,
+                    color:
+                      s.label === "Skipped" && s.val > 0
+                        ? "#E74C3C"
+                        : "#0F2744",
+                  }}
+                >
+                  {s.val}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Queue Card */}
           <div
             style={{
               background: "#fff",
@@ -1704,17 +2177,17 @@ function AssistantView({
             >
               <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "#7A92B0",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#94A3B8",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}
               >
-                Patient Queue
+                {biz.queueLabel}
               </div>
               <button
-                onClick={() => setAddingPatient(true)}
+                onClick={() => setAddingCustomer(true)}
                 style={{
                   fontSize: 12,
                   padding: "6px 14px",
@@ -1727,12 +2200,11 @@ function AssistantView({
                   minHeight: 34,
                 }}
               >
-                + Add Patient
+                + Add
               </button>
             </div>
 
-            {/* Add patient form */}
-            {addingPatient && (
+            {addingCustomer && (
               <div
                 style={{
                   background: "#F0F6FF",
@@ -1753,7 +2225,7 @@ function AssistantView({
                   <input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Patient name"
+                    placeholder="Name"
                     style={{
                       padding: "9px 12px",
                       borderRadius: 8,
@@ -1765,8 +2237,7 @@ function AssistantView({
                   <input
                     value={newAge}
                     onChange={(e) => setNewAge(e.target.value)}
-                    placeholder="Age"
-                    type="number"
+                    placeholder="Age / ID"
                     style={{
                       padding: "9px 12px",
                       borderRadius: 8,
@@ -1787,9 +2258,9 @@ function AssistantView({
                       boxSizing: "border-box",
                     }}
                   >
-                    <option>Follow-up</option>
-                    <option>New Consultation</option>
-                    <option>Emergency</option>
+                    {biz.types.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
                   </select>
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 8 }}
@@ -1799,7 +2270,7 @@ function AssistantView({
                       onChange={(e) => setNewMins(parseInt(e.target.value))}
                       type="number"
                       min="5"
-                      max="60"
+                      max="120"
                       style={{
                         flex: 1,
                         padding: "9px 12px",
@@ -1823,12 +2294,12 @@ function AssistantView({
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
-                    onClick={addPatient}
+                    onClick={addCustomer}
                     style={{
                       flex: 1,
                       padding: "10px",
                       borderRadius: 8,
-                      background: "#1A6FA8",
+                      background: biz.color,
                       color: "#fff",
                       border: "none",
                       fontSize: 13,
@@ -1837,10 +2308,10 @@ function AssistantView({
                       minHeight: 42,
                     }}
                   >
-                    Add
+                    Add to Queue
                   </button>
                   <button
-                    onClick={() => setAddingPatient(false)}
+                    onClick={() => setAddingCustomer(false)}
                     style={{
                       padding: "10px 16px",
                       borderRadius: 8,
@@ -1858,7 +2329,6 @@ function AssistantView({
               </div>
             )}
 
-            {/* Queue rows */}
             {patients.map((p, i) => {
               const isDone = [
                 "done",
@@ -1866,13 +2336,12 @@ function AssistantView({
                 "no-show",
                 "rescheduled",
               ].includes(p.status);
-              const isCurrent = i === currentIdx;
+              const isCur = i === currentIdx;
               const sm = STATUS_META[p.status] || STATUS_META.waiting;
               const doneIcon =
                 { done: "✓", cancelled: "✕", "no-show": "?", rescheduled: "↩" }[
                   p.status
                 ] || "✓";
-
               return (
                 <div
                   key={p.id}
@@ -1880,38 +2349,35 @@ function AssistantView({
                     display: "flex",
                     alignItems: "center",
                     gap: isMobile ? 8 : 12,
-                    padding: "12px 0",
+                    padding: "11px 0",
                     borderBottom:
                       i < patients.length - 1 ? "1px solid #F0F6FF" : "none",
                     opacity: isDone ? 0.4 : 1,
                     transition: "opacity 0.3s",
                   }}
                 >
-                  {/* Number badge */}
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       borderRadius: 8,
                       flexShrink: 0,
-                      background: isCurrent
-                        ? "#1A6FA8"
+                      background: isCur
+                        ? biz.color
                         : isDone
                           ? "#F0F6FF"
-                          : "#F8FAFD",
+                          : "#F8FAFC",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: 12,
                       fontWeight: 700,
-                      color: isCurrent ? "#fff" : "#7A92B0",
-                      border: isCurrent ? "none" : "1px solid #E2EAF4",
+                      color: isCur ? "#fff" : "#94A3B8",
+                      border: isCur ? "none" : "1px solid #E2EAF4",
                     }}
                   >
                     {isDone ? doneIcon : i + 1}
                   </div>
-
-                  {/* Name + type */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
@@ -1929,17 +2395,17 @@ function AssistantView({
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
-                          maxWidth: isMobile ? 80 : 160,
+                          maxWidth: isMobile ? 80 : 150,
                         }}
                       >
                         {p.name}
                       </span>
-                      {isCurrent && (
+                      {isCur && (
                         <span
                           style={{
                             fontSize: 10,
-                            background: "#E8F4FD",
-                            color: "#1A6FA8",
+                            background: biz.color,
+                            color: "#fff",
                             padding: "1px 6px",
                             borderRadius: 10,
                           }}
@@ -1961,35 +2427,31 @@ function AssistantView({
                       </span>
                     </div>
                     <div
-                      style={{ fontSize: 11, color: "#7A92B0", marginTop: 1 }}
+                      style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}
                     >
-                      {p.type} · {p.allocatedMins} min
+                      {p.type} · {p.allocatedMins}m
                     </div>
                   </div>
-
-                  {/* Time */}
                   <div
                     style={{
                       textAlign: "right",
                       flexShrink: 0,
                       fontSize: 12,
                       fontWeight: 600,
-                      color: p.status === "rescheduled" ? "#6B21A8" : "#0F2744",
+                      color: p.status === "rescheduled" ? "#7C3AED" : "#0F2744",
                     }}
                   >
                     {p.status === "rescheduled"
                       ? p.rescheduledTo || "—"
                       : p.scheduled}
                   </div>
-
-                  {/* Actions for upcoming patients */}
                   {i > currentIdx &&
                     !isDone &&
                     (adjusting === p.id ? (
                       <div
                         style={{
                           display: "flex",
-                          gap: isMobile ? 2 : 4,
+                          gap: 3,
                           alignItems: "center",
                           flexShrink: 0,
                         }}
@@ -1997,14 +2459,13 @@ function AssistantView({
                         <button
                           onClick={() => setAdjustMins((m) => m - 5)}
                           style={{
-                            width: 26,
-                            height: 26,
+                            width: 24,
+                            height: 24,
                             borderRadius: 6,
                             border: "1px solid #D0DFF0",
                             background: "#fff",
                             cursor: "pointer",
-                            fontSize: 15,
-                            lineHeight: 1,
+                            fontSize: 14,
                           }}
                         >
                           −
@@ -2018,19 +2479,19 @@ function AssistantView({
                             textAlign: "center",
                           }}
                         >
-                          {adjustMins > 0 ? `+${adjustMins}` : adjustMins}m
+                          {adjustMins > 0 ? "+" : ""}
+                          {adjustMins}m
                         </span>
                         <button
                           onClick={() => setAdjustMins((m) => m + 5)}
                           style={{
-                            width: 26,
-                            height: 26,
+                            width: 24,
+                            height: 24,
                             borderRadius: 6,
                             border: "1px solid #D0DFF0",
                             background: "#fff",
                             cursor: "pointer",
-                            fontSize: 15,
-                            lineHeight: 1,
+                            fontSize: 14,
                           }}
                         >
                           +
@@ -2058,7 +2519,7 @@ function AssistantView({
                             padding: "3px 8px",
                             borderRadius: 6,
                             background: "#F0F6FF",
-                            color: "#7A92B0",
+                            color: "#94A3B8",
                             border: "none",
                             fontSize: 11,
                             cursor: "pointer",
@@ -2068,13 +2529,7 @@ function AssistantView({
                         </button>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: isMobile ? 3 : 4,
-                          flexShrink: 0,
-                        }}
-                      >
+                      <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
                         <button
                           onClick={() => {
                             setAdjusting(p.id);
@@ -2089,7 +2544,6 @@ function AssistantView({
                             border: "1px solid #D0DFF0",
                             cursor: "pointer",
                             fontWeight: 500,
-                            whiteSpace: "nowrap",
                             minHeight: 30,
                           }}
                         >
@@ -2106,7 +2560,6 @@ function AssistantView({
                             border: "1px solid #FDE68A",
                             cursor: "pointer",
                             fontWeight: 500,
-                            whiteSpace: "nowrap",
                             minHeight: 30,
                           }}
                         >
@@ -2119,153 +2572,78 @@ function AssistantView({
             })}
           </div>
 
-          {/* Mobile/Tablet Log Panel (collapsible inline) */}
-          {narrow && showLog && (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 16,
-                border: "1.5px solid #D0DFF0",
-                marginTop: 16,
-                overflow: "hidden",
-                boxShadow: "0 2px 16px rgba(15,39,68,0.06)",
-                animation: "fadeIn .2s ease",
-              }}
-            >
-              <div
+          {/* Mobile Log */}
+          {narrow && (
+            <div style={{ marginTop: 14 }}>
+              <button
+                onClick={() => setShowLog((v) => !v)}
                 style={{
-                  padding: "12px 16px",
-                  borderBottom: "1px solid #E2EAF4",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  width: "100%",
+                  padding: "11px",
+                  borderRadius: 12,
+                  background: "#fff",
+                  border: "1.5px solid #D0DFF0",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#0F2744",
+                  cursor: "pointer",
                 }}
               >
+                {showLog ? "✕ Hide Log" : "📋 Activity Log dekhein"}
+              </button>
+              {showLog && (
                 <div
                   style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#7A92B0",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
+                    background: "#fff",
+                    borderRadius: 12,
+                    border: "1.5px solid #D0DFF0",
+                    marginTop: 8,
+                    overflow: "hidden",
+                    animation: "fadeIn .2s ease",
                   }}
                 >
-                  Activity Log
-                </div>
-                <button
-                  onClick={() => setShowLog(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    fontSize: 16,
-                    color: "#7A92B0",
-                    cursor: "pointer",
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Stats grid */}
-              <div
-                style={{
-                  padding: "10px 12px",
-                  borderBottom: "1px solid #E2EAF4",
-                }}
-              >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 6,
-                  }}
-                >
-                  {statsData.map((s) => (
+                  {log.length === 0 ? (
                     <div
-                      key={s.label}
                       style={{
-                        background: "#F8FAFD",
-                        borderRadius: 8,
-                        padding: "8px 10px",
+                        textAlign: "center",
+                        padding: 24,
+                        color: "#94A3B8",
+                        fontSize: 13,
                       }}
                     >
+                      No activity yet
+                    </div>
+                  ) : (
+                    log.map((entry) => (
                       <div
+                        key={entry.id}
                         style={{
-                          fontSize: 10,
-                          color: "#7A92B0",
-                          marginBottom: 2,
+                          padding: "8px 14px",
+                          borderBottom: "1px solid #F8FAFC",
                         }}
                       >
-                        {s.label}
+                        <div style={{ fontSize: 11, color: "#94A3B8" }}>
+                          {entry.time}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#0F2744",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {entry.msg}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color:
-                            (s.label === "Network" && s.val === "Offline") ||
-                            (s.label === "Skipped" && s.val > 0)
-                              ? "#C0392B"
-                              : "#0F2744",
-                        }}
-                      >
-                        {s.val}
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
-              </div>
-
-              {/* Log entries */}
-              <div
-                style={{ maxHeight: 240, overflowY: "auto", padding: "4px 0" }}
-              >
-                {log.length === 0 && (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: 24,
-                      color: "#7A92B0",
-                      fontSize: 13,
-                    }}
-                  >
-                    No activity yet
-                  </div>
-                )}
-                {log.map((entry) => (
-                  <div
-                    key={entry.id}
-                    style={{
-                      padding: "7px 16px",
-                      borderBottom: "1px solid #F8FAFD",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#7A92B0",
-                        marginBottom: 1,
-                      }}
-                    >
-                      {entry.time}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#0F2744",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {entry.msg}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* ── Desktop Sidebar: Log + Stats ── */}
+        {/* Desktop Sidebar */}
         {isDesktop && (
           <div
             style={{
@@ -2273,9 +2651,8 @@ function AssistantView({
               borderLeft: "1px solid #E2EAF4",
               display: "flex",
               flexDirection: "column",
-              height: "calc(100vh - 56px)",
-              position: "sticky",
-              top: 56,
+              height: "100%",
+              overflow: "hidden",
             }}
           >
             <div
@@ -2286,9 +2663,9 @@ function AssistantView({
             >
               <div
                 style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#7A92B0",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#94A3B8",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}
@@ -2296,43 +2673,49 @@ function AssistantView({
                 Activity Log
               </div>
             </div>
-
             <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
-              {log.length === 0 && (
+              {log.length === 0 ? (
                 <div
                   style={{
                     textAlign: "center",
                     padding: 32,
-                    color: "#7A92B0",
+                    color: "#94A3B8",
                     fontSize: 13,
                   }}
                 >
                   No activity yet
                 </div>
+              ) : (
+                log.map((entry) => (
+                  <div
+                    key={entry.id}
+                    style={{
+                      padding: "8px 20px",
+                      borderBottom: "1px solid #F8FAFC",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "#94A3B8",
+                        marginBottom: 2,
+                      }}
+                    >
+                      {entry.time}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        color: "#0F2744",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {entry.msg}
+                    </div>
+                  </div>
+                ))
               )}
-              {log.map((entry) => (
-                <div
-                  key={entry.id}
-                  style={{
-                    padding: "8px 20px",
-                    borderBottom: "1px solid #F8FAFD",
-                  }}
-                >
-                  <div
-                    style={{ fontSize: 11, color: "#7A92B0", marginBottom: 2 }}
-                  >
-                    {entry.time}
-                  </div>
-                  <div
-                    style={{ fontSize: 13, color: "#0F2744", lineHeight: 1.5 }}
-                  >
-                    {entry.msg}
-                  </div>
-                </div>
-              ))}
             </div>
-
-            {/* Stats */}
             <div style={{ padding: 16, borderTop: "1px solid #E2EAF4" }}>
               <div
                 style={{
@@ -2353,7 +2736,7 @@ function AssistantView({
                     <div
                       style={{
                         fontSize: 11,
-                        color: "#7A92B0",
+                        color: "#94A3B8",
                         marginBottom: 3,
                       }}
                     >
@@ -2364,9 +2747,8 @@ function AssistantView({
                         fontSize: 18,
                         fontWeight: 700,
                         color:
-                          (s.label === "Network" && s.val === "Offline") ||
-                          (s.label === "Skipped" && s.val > 0)
-                            ? "#C0392B"
+                          s.label === "Skipped" && s.val > 0
+                            ? "#E74C3C"
                             : "#0F2744",
                       }}
                     >
@@ -2382,6 +2764,7 @@ function AssistantView({
 
       <ActionModal
         patient={modalPatient}
+        biz={biz}
         onClose={() => setModalPatient(null)}
         onAction={handleAction}
         patients={patients}
@@ -2391,42 +2774,26 @@ function AssistantView({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ROOT APP
-// ═══════════════════════════════════════════════════════════════════════════
-export default function App() {
-  const [view, setView] = useState("assistant");
-  const { isMobile } = useBreakpoint();
+// Fix: hoist modalPatient state properly inside StaffView
+// (Already correctly placed above — the duplicate at bottom was a comment artifact)
 
-  const [patients, setPatients] = useState(() => {
-    try {
-      const s = localStorage.getItem("mq_state");
-      if (s) return JSON.parse(s).patients || INITIAL_PATIENTS;
-    } catch (e) {}
-    return INITIAL_PATIENTS;
-  });
-  const [currentIdx, setCurrentIdx] = useState(() => {
-    try {
-      const s = localStorage.getItem("mq_state");
-      if (s) return JSON.parse(s).currentIdx || 0;
-    } catch (e) {}
-    return 0;
-  });
-  const [driftSeconds, setDriftSeconds] = useState(() => {
-    try {
-      const s = localStorage.getItem("mq_state");
-      if (s) return JSON.parse(s).driftSeconds || 0;
-    } catch (e) {}
-    return 0;
-  });
+// ═══════════════════════════════════════════════════════════════════════════
+// APP SHELL (with tabs: Staff / Customer)
+// ═══════════════════════════════════════════════════════════════════════════
+function AppShell({ bizId, onBack }) {
+  const biz = BUSINESSES.find((b) => b.id === bizId);
+  const { isMobile, isDesktop } = useBreakpoint();
 
+  const [patients, setPatients] = useState(() =>
+    biz.customers.map((c) => ({ ...c, status: "waiting" })),
+  );
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [offline, setOffline] = useState(!navigator.onLine);
-  const [lastSync, setLastSync] = useState(null);
+  const [driftSeconds, setDriftSeconds] = useState(0);
+  const [activeTab, setActiveTab] = useState("staff");
   const tickRef = useRef(null);
 
-  // Timer
   useEffect(() => {
     if (isRunning)
       tickRef.current = setInterval(
@@ -2437,107 +2804,1268 @@ export default function App() {
     return () => clearInterval(tickRef.current);
   }, [isRunning]);
 
-  // Online / offline
-  useEffect(() => {
-    const goOff = () => setOffline(true);
-    const goOn = () => {
-      setOffline(false);
-      setLastSync(
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    };
-    window.addEventListener("offline", goOff);
-    window.addEventListener("online", goOn);
-    return () => {
-      window.removeEventListener("offline", goOff);
-      window.removeEventListener("online", goOn);
-    };
-  }, []);
-
-  // Persist
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "mq_state",
-        JSON.stringify({ patients, currentIdx, driftSeconds }),
-      );
-    } catch (e) {}
-  }, [patients, currentIdx, driftSeconds]);
-
   const current = patients[currentIdx];
   const allocatedSecs = current ? current.allocatedMins * 60 : 0;
 
-  return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      {view === "assistant" ? (
-        <AssistantView
-          patients={patients}
-          setPatients={setPatients}
-          currentIdx={currentIdx}
-          setCurrentIdx={setCurrentIdx}
-          sessionSeconds={sessionSeconds}
-          setSessionSeconds={setSessionSeconds}
-          isRunning={isRunning}
-          setIsRunning={setIsRunning}
-          driftSeconds={driftSeconds}
-          setDriftSeconds={setDriftSeconds}
-          offline={offline}
-          lastSync={lastSync}
-        />
-      ) : (
-        <PatientView
-          patients={patients}
-          currentIdx={currentIdx}
-          sessionSeconds={sessionSeconds}
-          allocatedSeconds={allocatedSecs}
-          driftSeconds={driftSeconds}
-          offline={offline}
-        />
-      )}
+  const tabStyle = (tab) => ({
+    padding: "8px 18px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
+    background: activeTab === tab ? biz.color : "transparent",
+    color: activeTab === tab ? "#fff" : "#64748B",
+    border: `1px solid ${activeTab === tab ? biz.color : "#334155"}`,
+    cursor: "pointer",
+    minHeight: 36,
+  });
 
-      {/* Bottom navigation pill */}
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#F2F4F8",
+        fontFamily: "'DM Sans', sans-serif",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Nav */}
       <div
         style={{
-          position: "fixed",
-          bottom: isMobile ? 14 : 20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 999,
           background: "#0F2744",
-          borderRadius: 50,
-          padding: isMobile ? "6px 8px" : "6px 8px",
+          padding: "0 16px",
           display: "flex",
-          gap: 4,
-          boxShadow: "0 4px 24px rgba(15,39,68,0.3)",
+          flexDirection: "column",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
         }}
       >
-        {[
-          ["assistant", "🩺 Assistant"],
-          ["patient", "👤 Patient"],
-        ].map(([v, label]) => (
+        <div
+          style={{
+            height: 56,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              onClick={onBack}
+              style={{
+                background: "rgba(255,255,255,.1)",
+                border: "none",
+                color: "#94A3B8",
+                borderRadius: 8,
+                width: 32,
+                height: 32,
+                fontSize: 16,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ←
+            </button>
+            <span style={{ fontSize: 24 }}>{biz.icon}</span>
+            <div>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>
+                {biz.name}
+              </div>
+              <div style={{ color: "#64748B", fontSize: 11 }}>QueueMaster</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {Math.abs(driftSeconds) > 60 && (
+              <div
+                style={{
+                  fontSize: 11,
+                  padding: "4px 10px",
+                  borderRadius: 20,
+                  fontWeight: 600,
+                  background: driftSeconds > 0 ? "#7C2D12" : "#14532D",
+                  color: driftSeconds > 0 ? "#FED7AA" : "#BBF7D0",
+                }}
+              >
+                {driftSeconds > 0 ? "+" : ""}
+                {Math.round(driftSeconds / 60)}m{" "}
+                {driftSeconds > 0 ? "late" : "early"}
+              </div>
+            )}
+            {!isMobile && (
+              <div style={{ fontSize: 12, color: "#7A9CC0" }}>
+                {
+                  patients.filter((p) => ["waiting", "late"].includes(p.status))
+                    .length
+                }{" "}
+                waiting
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Tab bar */}
+        <div style={{ padding: "0 0 10px", display: "flex", gap: 6 }}>
           <button
-            key={v}
-            onClick={() => setView(v)}
-            style={{
-              padding: isMobile ? "10px 20px" : "8px 18px",
-              borderRadius: 40,
-              border: "none",
-              fontSize: isMobile ? 13 : 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              background: view === v ? "#1A6FA8" : "transparent",
-              color: view === v ? "#fff" : "#7A9CC0",
-              transition: "all .2s",
-              minHeight: isMobile ? 44 : 36,
-            }}
+            style={tabStyle("staff")}
+            onClick={() => setActiveTab("staff")}
           >
-            {label}
+            🧑‍💼 {isMobile ? "Staff" : `${biz.staffLabel} View`}
           </button>
-        ))}
+          <button
+            style={tabStyle("customer")}
+            onClick={() => setActiveTab("customer")}
+          >
+            👤 {isMobile ? "Customer" : "Customer View"}
+          </button>
+        </div>
       </div>
+
+      {/* Content */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        {activeTab === "staff" ? (
+          <StaffViewWrapper
+            biz={biz}
+            patients={patients}
+            setPatients={setPatients}
+            currentIdx={currentIdx}
+            setCurrentIdx={setCurrentIdx}
+            sessionSeconds={sessionSeconds}
+            setSessionSeconds={setSessionSeconds}
+            isRunning={isRunning}
+            setIsRunning={setIsRunning}
+            driftSeconds={driftSeconds}
+            setDriftSeconds={setDriftSeconds}
+          />
+        ) : (
+          <CustomerView
+            biz={biz}
+            patients={patients}
+            currentIdx={currentIdx}
+            sessionSeconds={sessionSeconds}
+            allocatedSeconds={allocatedSecs}
+            driftSeconds={driftSeconds}
+          />
+        )}
+      </div>
+      <style>{GLOBAL_CSS}</style>
     </div>
   );
+}
+
+// Wrapper to keep modalPatient state inside StaffView properly
+function StaffViewWrapper(props) {
+  const [modalPatient, setModalPatient] = useState(null);
+  const {
+    biz,
+    patients,
+    setPatients,
+    currentIdx,
+    setCurrentIdx,
+    sessionSeconds,
+    setSessionSeconds,
+    isRunning,
+    setIsRunning,
+    driftSeconds,
+    setDriftSeconds,
+  } = props;
+  const { isMobile, isTablet, isDesktop } = useBreakpoint();
+  const narrow = isMobile || isTablet;
+
+  const current = patients[currentIdx];
+  const allocatedSecs = current ? current.allocatedMins * 60 : 0;
+  const isOvertime = sessionSeconds > allocatedSecs;
+  const [adjusting, setAdjusting] = useState(null);
+  const [adjustMins, setAdjustMins] = useState(0);
+  const [log, setLog] = useState([]);
+  const [note, setNote] = useState("");
+  const [showLog, setShowLog] = useState(false);
+  const [addingCustomer, setAddingCustomer] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newAge, setNewAge] = useState("");
+  const [newType, setNewType] = useState(biz.types[0]);
+  const [newMins, setNewMins] = useState(biz.defaultMins);
+
+  const addLog = useCallback((msg) => {
+    const timeStr = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    setLog((prev) =>
+      [{ msg, time: timeStr, id: Date.now() }, ...prev].slice(0, 25),
+    );
+  }, []);
+
+  const startSession = () => {
+    setIsRunning(true);
+    setSessionSeconds(0);
+    setPatients((prev) =>
+      prev.map((p, i) => (i === currentIdx ? { ...p, status: "active" } : p)),
+    );
+    addLog(`▶ ${biz.sessionLabel} started: ${current.name}`);
+  };
+
+  const endSession = () => {
+    setIsRunning(false);
+    const extra = sessionSeconds - allocatedSecs;
+    const newDrift = driftSeconds + extra;
+    setDriftSeconds(newDrift);
+    addLog(
+      `⏹ Done: ${current.name} (${formatTime(sessionSeconds)} | drift ${extra >= 0 ? "+" : ""}${Math.round(extra / 60)}m)`,
+    );
+    setPatients((prev) => {
+      const updated = prev.map((p, i) =>
+        i === currentIdx ? { ...p, status: "done" } : p,
+      );
+      return recomputeSchedule(updated, newDrift);
+    });
+    if (currentIdx < patients.length - 1) {
+      setCurrentIdx((c) => c + 1);
+      setSessionSeconds(0);
+    } else setCurrentIdx((c) => c + 1);
+  };
+
+  const handleAction = (action, pid, extra) => {
+    setPatients((prev) => {
+      let updated = [...prev];
+      const idx = updated.findIndex((p) => p.id === pid);
+      if (action === "cancel") {
+        updated[idx] = { ...updated[idx], status: "cancelled" };
+        addLog(`🚫 Cancelled: ${updated[idx].name}`);
+      } else if (action === "no-show") {
+        updated[idx] = { ...updated[idx], status: "no-show" };
+        addLog(`❓ No Show: ${updated[idx].name}`);
+      } else if (action === "late") {
+        const p = { ...updated[idx], status: "late", lateBy: extra.lateBy };
+        updated.splice(idx, 1);
+        updated.push(p);
+        addLog(`🕐 Late: ${p.name} → end`);
+      } else if (action === "reschedule") {
+        updated[idx] = {
+          ...updated[idx],
+          status: "rescheduled",
+          rescheduledTo: extra.newTime,
+        };
+        addLog(`📅 Rescheduled: ${updated[idx].name} → ${extra.newTime}`);
+      }
+      return recomputeSchedule(updated, driftSeconds);
+    });
+  };
+
+  const applyAdjust = (pid) => {
+    setPatients(
+      patients.map((p) =>
+        p.id === pid
+          ? { ...p, allocatedMins: Math.max(5, p.allocatedMins + adjustMins) }
+          : p,
+      ),
+    );
+    addLog(
+      `⏱ Adjusted: ${adjustMins > 0 ? "+" : ""}${adjustMins}m for ${patients.find((p) => p.id === pid)?.name}`,
+    );
+    setAdjusting(null);
+    setAdjustMins(0);
+  };
+
+  const addCustomer = () => {
+    if (!newName.trim()) return;
+    const activeP = patients.filter(
+      (p) => !["cancelled", "no-show", "rescheduled"].includes(p.status),
+    );
+    const lastP = activeP[activeP.length - 1];
+    const lastMins = parseTimeToMinutes(lastP.scheduled) + lastP.allocatedMins;
+    const newP = {
+      id: Date.now(),
+      name: newName.trim(),
+      age: newAge || "",
+      type: newType,
+      phone: "—",
+      status: "waiting",
+      allocatedMins: newMins,
+      scheduled: minutesToTimeStr(lastMins + Math.round(driftSeconds / 60)),
+    };
+    setPatients((prev) => [...prev, newP]);
+    addLog(`➕ Added: ${newName.trim()} at ${newP.scheduled}`);
+    setAddingCustomer(false);
+    setNewName("");
+    setNewAge("");
+    setNewType(biz.types[0]);
+    setNewMins(biz.defaultMins);
+  };
+
+  const tc = current ? getTypeColor(current.type) : {};
+  const progress =
+    allocatedSecs > 0
+      ? Math.min((sessionSeconds / allocatedSecs) * 100, 100)
+      : 0;
+  const statsData = [
+    { label: "Total", val: patients.length },
+    { label: "Done", val: patients.filter((p) => p.status === "done").length },
+    {
+      label: "Waiting",
+      val: patients.filter((p) => ["waiting", "late"].includes(p.status))
+        .length,
+    },
+    {
+      label: "Skipped",
+      val: patients.filter((p) =>
+        ["cancelled", "no-show", "rescheduled"].includes(p.status),
+      ).length,
+    },
+    {
+      label: "Drift",
+      val: `${driftSeconds >= 0 ? "+" : ""}${Math.round(driftSeconds / 60)}m`,
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        display: isDesktop ? "grid" : "flex",
+        gridTemplateColumns: isDesktop ? "1fr 320px" : undefined,
+        flexDirection: isDesktop ? undefined : "column",
+        flex: 1,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          overflowY: "auto",
+          padding: narrow ? "12px" : "20px",
+          paddingBottom: narrow ? 80 : 20,
+        }}
+      >
+        {/* Session Card */}
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            border: "1.5px solid #D0DFF0",
+            padding: narrow ? 14 : 22,
+            marginBottom: 16,
+            boxShadow: "0 2px 16px rgba(15,39,68,0.06)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#94A3B8",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              {biz.sessionLabel} · Active
+            </div>
+            {isRunning && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  color: "#16A34A",
+                  fontWeight: 600,
+                }}
+              >
+                <div
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#22C55E",
+                    animation: "pulse 1.5s infinite",
+                  }}
+                />
+                LIVE
+              </div>
+            )}
+          </div>
+          {current && currentIdx < patients.length ? (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: isMobile ? 12 : 16,
+                  marginBottom: 18,
+                  flexWrap: isMobile ? "wrap" : "nowrap",
+                }}
+              >
+                <div
+                  style={{
+                    width: isMobile ? 50 : 58,
+                    height: isMobile ? 50 : 58,
+                    borderRadius: 14,
+                    flexShrink: 0,
+                    background: tc.bg || "#F0F6FF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: isMobile ? 20 : 22,
+                    fontWeight: 700,
+                    color: tc.text || "#1A6FA8",
+                  }}
+                >
+                  {current.name.charAt(0)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: isMobile ? 17 : 20,
+                      fontWeight: 700,
+                      color: "#0F2744",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {current.name}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        background: tc.bg || "#F0F6FF",
+                        color: tc.text || "#1A6FA8",
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {current.type}
+                    </span>
+                    {current.age && (
+                      <span
+                        style={{
+                          fontSize: 12,
+                          background: "#F0F6FF",
+                          color: "#1A6FA8",
+                          padding: "3px 10px",
+                          borderRadius: 20,
+                        }}
+                      >
+                        Age {current.age}
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        fontSize: 12,
+                        background: "#F0F6FF",
+                        color: "#1A6FA8",
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                      }}
+                    >
+                      {current.allocatedMins} min
+                    </span>
+                    {current.phone && current.phone !== "—" && (
+                      <span
+                        style={{
+                          fontSize: 12,
+                          background: "#F8FAFC",
+                          color: "#475569",
+                          padding: "3px 10px",
+                          borderRadius: 20,
+                        }}
+                      >
+                        📞 {current.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div
+                    style={{
+                      fontSize: isMobile ? 32 : 38,
+                      fontWeight: 700,
+                      color: isOvertime ? "#E74C3C" : "#0F2744",
+                      fontVariantNumeric: "tabular-nums",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {formatTime(sessionSeconds)}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#7A92B0", marginTop: 4 }}>
+                    of {formatTime(allocatedSecs)}
+                  </div>
+                </div>
+              </div>
+              <div
+                style={{
+                  height: 8,
+                  background: "#F0F6FF",
+                  borderRadius: 99,
+                  overflow: "hidden",
+                  marginBottom: 8,
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${progress}%`,
+                    background: isOvertime
+                      ? "#E74C3C"
+                      : progress > 80
+                        ? "#F59E0B"
+                        : biz.color,
+                    borderRadius: 99,
+                    transition: "width 0.5s, background 0.3s",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 18,
+                }}
+              >
+                <span style={{ fontSize: 12, color: "#7A92B0" }}>
+                  {Math.round(progress)}% used
+                </span>
+                {isOvertime ? (
+                  <span
+                    style={{ fontSize: 12, color: "#E74C3C", fontWeight: 600 }}
+                  >
+                    +{formatTime(sessionSeconds - allocatedSecs)} overtime
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 12, color: "#7A92B0" }}>
+                    {formatTime(allocatedSecs - sessionSeconds)} remaining
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                {!isRunning ? (
+                  <button
+                    onClick={startSession}
+                    style={{
+                      flex: 1,
+                      padding: "13px",
+                      borderRadius: 10,
+                      background: biz.color,
+                      color: "#fff",
+                      border: "none",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      minHeight: 48,
+                    }}
+                  >
+                    ▶ Start {biz.sessionLabel}
+                  </button>
+                ) : (
+                  <button
+                    onClick={endSession}
+                    style={{
+                      flex: 1,
+                      padding: "13px",
+                      borderRadius: 10,
+                      background: "#0F2744",
+                      color: "#fff",
+                      border: "none",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      minHeight: 48,
+                    }}
+                  >
+                    ⏹ End & Next
+                  </button>
+                )}
+              </div>
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && note.trim()) {
+                    addLog(`📝 Note: ${note.trim()}`);
+                    setNote("");
+                  }
+                }}
+                placeholder="Note add karein... (Enter dabayein)"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1.5px solid #D0DFF0",
+                  fontSize: 13,
+                  color: "#0F2744",
+                  background: "#F8FAFD",
+                  boxSizing: "border-box",
+                }}
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "40px 0",
+                color: "#7A92B0",
+              }}
+            >
+              <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: "#0F2744" }}>
+                Sab kaam ho gaya!
+              </div>
+              <div style={{ fontSize: 13 }}>Queue mein koi nahi.</div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(5, 1fr)",
+            gap: 8,
+            marginBottom: 16,
+          }}
+        >
+          {statsData.map((s) => (
+            <div
+              key={s.label}
+              style={{
+                background: "#fff",
+                borderRadius: 12,
+                border: "1px solid #E2EAF4",
+                padding: "10px 8px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "#94A3B8",
+                  marginBottom: 4,
+                  fontWeight: 600,
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  color:
+                    s.label === "Skipped" && s.val > 0 ? "#E74C3C" : "#0F2744",
+                }}
+              >
+                {s.val}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Queue */}
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            border: "1.5px solid #D0DFF0",
+            padding: narrow ? "14px 12px" : 20,
+            boxShadow: "0 2px 16px rgba(15,39,68,0.06)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#94A3B8",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              {biz.queueLabel}
+            </div>
+            <button
+              onClick={() => setAddingCustomer(true)}
+              style={{
+                fontSize: 12,
+                padding: "6px 14px",
+                borderRadius: 8,
+                background: "#E8F4FD",
+                color: "#1A6FA8",
+                border: "none",
+                fontWeight: 600,
+                cursor: "pointer",
+                minHeight: 34,
+              }}
+            >
+              + Add
+            </button>
+          </div>
+
+          {addingCustomer && (
+            <div
+              style={{
+                background: "#F0F6FF",
+                borderRadius: 12,
+                padding: 14,
+                marginBottom: 14,
+                border: "1.5px dashed #A8C7E0",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Name"
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #D0DFF0",
+                    fontSize: 13,
+                    boxSizing: "border-box",
+                  }}
+                />
+                <input
+                  value={newAge}
+                  onChange={(e) => setNewAge(e.target.value)}
+                  placeholder="Age / ID"
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #D0DFF0",
+                    fontSize: 13,
+                    boxSizing: "border-box",
+                  }}
+                />
+                <select
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value)}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #D0DFF0",
+                    fontSize: 13,
+                    background: "#fff",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {biz.types.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    value={newMins}
+                    onChange={(e) => setNewMins(parseInt(e.target.value))}
+                    type="number"
+                    min="5"
+                    max="120"
+                    style={{
+                      flex: 1,
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: "1px solid #D0DFF0",
+                      fontSize: 13,
+                      minWidth: 0,
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: "#7A92B0",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    mins
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={addCustomer}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: 8,
+                    background: biz.color,
+                    color: "#fff",
+                    border: "none",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    minHeight: 42,
+                  }}
+                >
+                  Add to Queue
+                </button>
+                <button
+                  onClick={() => setAddingCustomer(false)}
+                  style={{
+                    padding: "10px 16px",
+                    borderRadius: 8,
+                    background: "#fff",
+                    color: "#7A92B0",
+                    border: "1px solid #D0DFF0",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    minHeight: 42,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {patients.map((p, i) => {
+            const isDone = [
+              "done",
+              "cancelled",
+              "no-show",
+              "rescheduled",
+            ].includes(p.status);
+            const isCur = i === currentIdx;
+            const sm = STATUS_META[p.status] || STATUS_META.waiting;
+            const doneIcon =
+              { done: "✓", cancelled: "✕", "no-show": "?", rescheduled: "↩" }[
+                p.status
+              ] || "✓";
+            return (
+              <div
+                key={p.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: isMobile ? 8 : 12,
+                  padding: "11px 0",
+                  borderBottom:
+                    i < patients.length - 1 ? "1px solid #F0F6FF" : "none",
+                  opacity: isDone ? 0.4 : 1,
+                  transition: "opacity 0.3s",
+                }}
+              >
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    background: isCur
+                      ? biz.color
+                      : isDone
+                        ? "#F0F6FF"
+                        : "#F8FAFC",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: isCur ? "#fff" : "#94A3B8",
+                    border: isCur ? "none" : "1px solid #E2EAF4",
+                  }}
+                >
+                  {isDone ? doneIcon : i + 1}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#0F2744",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: isMobile ? 80 : 150,
+                      }}
+                    >
+                      {p.name}
+                    </span>
+                    {isCur && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          background: biz.color,
+                          color: "#fff",
+                          padding: "1px 6px",
+                          borderRadius: 10,
+                        }}
+                      >
+                        Active
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        fontSize: 10,
+                        background: sm.bg,
+                        color: sm.text,
+                        padding: "1px 6px",
+                        borderRadius: 10,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {sm.label}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>
+                    {p.type} · {p.allocatedMins}m
+                  </div>
+                </div>
+                <div
+                  style={{
+                    textAlign: "right",
+                    flexShrink: 0,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: p.status === "rescheduled" ? "#7C3AED" : "#0F2744",
+                  }}
+                >
+                  {p.status === "rescheduled"
+                    ? p.rescheduledTo || "—"
+                    : p.scheduled}
+                </div>
+                {i > currentIdx &&
+                  !isDone &&
+                  (adjusting === p.id ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 3,
+                        alignItems: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <button
+                        onClick={() => setAdjustMins((m) => m - 5)}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 6,
+                          border: "1px solid #D0DFF0",
+                          background: "#fff",
+                          cursor: "pointer",
+                          fontSize: 14,
+                        }}
+                      >
+                        −
+                      </button>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "#1A6FA8",
+                          minWidth: 28,
+                          textAlign: "center",
+                        }}
+                      >
+                        {adjustMins > 0 ? "+" : ""}
+                        {adjustMins}m
+                      </span>
+                      <button
+                        onClick={() => setAdjustMins((m) => m + 5)}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: 6,
+                          border: "1px solid #D0DFF0",
+                          background: "#fff",
+                          cursor: "pointer",
+                          fontSize: 14,
+                        }}
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() => applyAdjust(p.id)}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          background: "#1A6FA8",
+                          color: "#fff",
+                          border: "none",
+                          fontSize: 11,
+                          cursor: "pointer",
+                        }}
+                      >
+                        OK
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAdjusting(null);
+                          setAdjustMins(0);
+                        }}
+                        style={{
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          background: "#F0F6FF",
+                          color: "#94A3B8",
+                          border: "none",
+                          fontSize: 11,
+                          cursor: "pointer",
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+                      <button
+                        onClick={() => {
+                          setAdjusting(p.id);
+                          setAdjustMins(0);
+                        }}
+                        style={{
+                          fontSize: isMobile ? 10 : 11,
+                          padding: isMobile ? "4px 7px" : "4px 10px",
+                          borderRadius: 6,
+                          background: "#F0F6FF",
+                          color: "#1A6FA8",
+                          border: "1px solid #D0DFF0",
+                          cursor: "pointer",
+                          fontWeight: 500,
+                          minHeight: 30,
+                        }}
+                      >
+                        ⏱{!isMobile && " Adjust"}
+                      </button>
+                      <button
+                        onClick={() => setModalPatient(p)}
+                        style={{
+                          fontSize: isMobile ? 10 : 11,
+                          padding: isMobile ? "4px 7px" : "4px 10px",
+                          borderRadius: 6,
+                          background: "#FEF9EC",
+                          color: "#92400E",
+                          border: "1px solid #FDE68A",
+                          cursor: "pointer",
+                          fontWeight: 500,
+                          minHeight: 30,
+                        }}
+                      >
+                        ⚠{!isMobile && " Action"}
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            );
+          })}
+        </div>
+
+        {narrow && (
+          <div style={{ marginTop: 14 }}>
+            <button
+              onClick={() => setShowLog((v) => !v)}
+              style={{
+                width: "100%",
+                padding: "11px",
+                borderRadius: 12,
+                background: "#fff",
+                border: "1.5px solid #D0DFF0",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#0F2744",
+                cursor: "pointer",
+              }}
+            >
+              {showLog ? "✕ Hide Log" : "📋 Activity Log"}
+            </button>
+            {showLog && (
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 12,
+                  border: "1.5px solid #D0DFF0",
+                  marginTop: 8,
+                  overflow: "hidden",
+                }}
+              >
+                {log.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: 24,
+                      color: "#94A3B8",
+                      fontSize: 13,
+                    }}
+                  >
+                    No activity yet
+                  </div>
+                ) : (
+                  log.map((e) => (
+                    <div
+                      key={e.id}
+                      style={{
+                        padding: "8px 14px",
+                        borderBottom: "1px solid #F8FAFC",
+                      }}
+                    >
+                      <div style={{ fontSize: 11, color: "#94A3B8" }}>
+                        {e.time}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#0F2744" }}>
+                        {e.msg}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isDesktop && (
+        <div
+          style={{
+            background: "#fff",
+            borderLeft: "1px solid #E2EAF4",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{ padding: "16px 20px", borderBottom: "1px solid #E2EAF4" }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#94A3B8",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Activity Log
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+            {log.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: 32,
+                  color: "#94A3B8",
+                  fontSize: 13,
+                }}
+              >
+                No activity yet
+              </div>
+            ) : (
+              log.map((e) => (
+                <div
+                  key={e.id}
+                  style={{
+                    padding: "8px 20px",
+                    borderBottom: "1px solid #F8FAFC",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 11, color: "#94A3B8", marginBottom: 2 }}
+                  >
+                    {e.time}
+                  </div>
+                  <div
+                    style={{ fontSize: 13, color: "#0F2744", lineHeight: 1.5 }}
+                  >
+                    {e.msg}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          <div style={{ padding: 16, borderTop: "1px solid #E2EAF4" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+              }}
+            >
+              {statsData.map((s) => (
+                <div
+                  key={s.label}
+                  style={{
+                    background: "#F8FAFD",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 11, color: "#94A3B8", marginBottom: 3 }}
+                  >
+                    {s.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color:
+                        s.label === "Skipped" && s.val > 0
+                          ? "#E74C3C"
+                          : "#0F2744",
+                    }}
+                  >
+                    {s.val}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ActionModal
+        patient={modalPatient}
+        biz={biz}
+        onClose={() => setModalPatient(null)}
+        onAction={handleAction}
+        patients={patients}
+      />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROOT APP
+// ═══════════════════════════════════════════════════════════════════════════
+export default function App() {
+  const [selectedBiz, setSelectedBiz] = useState(null);
+
+  if (!selectedBiz) {
+    return <SelectorScreen onSelect={(id) => setSelectedBiz(id)} />;
+  }
+  return <AppShell bizId={selectedBiz} onBack={() => setSelectedBiz(null)} />;
 }
